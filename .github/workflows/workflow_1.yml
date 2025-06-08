@@ -1,0 +1,69 @@
+name: Persistent NPort Tunnel - Workflow 1
+
+on:
+  workflow_dispatch:  # मैन्युअल रूप से स्टार्ट किया जा सकता है
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355  # यह 6 घंटे तक चलेगा
+
+    steps:
+      - name: Clone repository
+        uses: actions/checkout@v4
+
+      - name: Build and Run Docker Container
+        run: |
+          sudo apt install git python
+          curl -o app.py "https://raw.githubusercontent.com/NitinBot001/warehouse/refs/heads/main/app.py"
+          pip install flask flask-cors python-csv
+          python app.py
+
+      - name: Install Dependencies
+        run: |
+          sudo apt update && sudo apt install -y openssh-client jq curl
+
+      - name: Generate Random Subdomain
+        run: |
+          SUBDOMAIN=$(openssl rand -hex 4)
+          echo "SUBDOMAIN=$SUBDOMAIN" >> $GITHUB_ENV
+
+      - name: Start NPort Tunnel and Save URL
+        run: |
+          echo "Starting NPort Tunnel with subdomain: $SUBDOMAIN"
+          # Add cloudflare gpg key
+          sudo mkdir -p --mode=0755 /usr/share/keyrings
+          curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | sudo tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null
+
+          # Add this repo to your apt repositories
+          echo 'deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main' | sudo tee /etc/apt/sources.list.d/cloudflared.list
+
+          # install cloudflared
+          sudo apt-get update && sudo apt-get install cloudflared
+
+          sleep 5
+
+          sudo cloudflared service install ${{ secrets.CF_KEY }}
+          
+          sleep 15
+
+          # टनल URL सेट करें
+          TUNNEL_URL="https://api.easyfarms.in/warehousre"
+          echo "Generated Tunnel URL: $TUNNEL_URL"
+
+          # URL को `instance.json` में सेव करें
+          echo "{ \"tunnel_url\": \"$TUNNEL_URL\" }" > instance.json
+
+      - name: Trigger Workflow 2 After 5 Hours 40 Minutes
+        run: |
+          echo "Waiting for 5 hours 40 minutes before triggering workflow_2..."
+          sleep 20400  # 5 घंटे 40 मिनट (5.67 × 60 × 60 सेकंड)
+          
+          echo "Triggering workflow_2 now..."
+          curl -X POST -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/workflow_2.yml/dispatches \
+            -d '{"ref": "main"}'
+
+      - name: Keep Workflow Running for 6 Hours
+        run: tail -f /dev/null  # इसे 6 घंटे तक चालू रखेगा
