@@ -14,10 +14,10 @@ jobs:
 
       - name: Run Python app
         run: |
-          sudo apt install git python
+          sudo apt install git python3
           curl -o app.py "https://raw.githubusercontent.com/NitinBot001/warehouse/refs/heads/main/app.py"
           pip install flask flask-cors python-csv
-          python app.py
+          python app.py &
 
       - name: Install Dependencies
         run: |
