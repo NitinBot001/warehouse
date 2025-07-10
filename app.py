@@ -6,8 +6,6 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-PORT = 8000
-
 def load_warehouse_data():
     files = [
         'static/punjab.csv', 'static/bihar.csv', 'static/haryana.csv', 'static/all.csv',
@@ -67,6 +65,9 @@ def home():
         }
     })
 
+# For Vercel
+def handler(event, context):
+    return app(event, context)
+
 if __name__ == '__main__':
-    print(f"Starting Flask server at http://localhost:{PORT}")
-    app.run(host='0.0.0.0', port=PORT, debug=False)
+    app.run(debug=True)
