@@ -36,21 +36,33 @@ def load_warehouse_data():
             if not lines:
                 continue
             
-            # Parse header
-            headers = [h.strip() for h in lines[0].split(',')]
+            # Parse header - remove quotes and strip
+            headers = [h.strip().strip('"').strip("'") for h in lines[0].split(',')]
             
             # Parse data rows
             for line in lines[1:]:
                 if not line.strip():
                     continue
                 
-                # Split by comma (basic CSV parsing)
-                values = line.split(',')
-                row = {}
+                # Split by comma and handle quotes
+                values = []
+                current = ''
+                in_quotes = False
                 
+                for char in line:
+                    if char in ('"', "'"):
+                        in_quotes = not in_quotes
+                    elif char == ',' and not in_quotes:
+                        values.append(current.strip())
+                        current = ''
+                    else:
+                        current += char
+                values.append(current.strip())
+                
+                row = {}
                 for i, header in enumerate(headers):
                     if i < len(values):
-                        row[header] = values[i].strip()
+                        row[header] = values[i].strip('"').strip("'").strip()
                 
                 # Convert capacity to int
                 try:
@@ -60,8 +72,8 @@ def load_warehouse_data():
                     row['Capacity(in MT)'] = 0
                 
                 # Pre-compute lowercase for faster filtering
-                row['_district_lower'] = row.get('District', '').lower()
-                row['_state_lower'] = row.get('State', '').lower()
+                row['_district_lower'] = row.get('District', '').lower().strip()
+                row['_state_lower'] = row.get('State', '').lower().strip()
                 data.append(row)
     
     WAREHOUSE_DATA = data
@@ -91,6 +103,18 @@ def get_warehouses():
     result = [{k: v for k, v in w.items() if not k.startswith('_')} for w in filtered]
     
     return jsonify(result)
+
+# Add this temporary route to see your data
+@app.route('/debug')
+def debug():
+    data = load_warehouse_data()
+    if data:
+        return jsonify({
+            "total_records": len(data),
+            "sample_record": data[0],
+            "all_keys": list(data[0].keys())
+        })
+    return jsonify({"error": "No data loaded"})
 
 @app.route('/')
 def home():
