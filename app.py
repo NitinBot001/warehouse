@@ -15,16 +15,7 @@ def load_warehouse_data():
     if WAREHOUSE_DATA is not None:
         return WAREHOUSE_DATA
     
-    files = [
-        'static/punjab.csv', 'static/bihar.csv', 'static/haryana.csv', 'static/all.csv',
-        'static/andrapradesh.csv', 'static/assam.csv', 'static/chandigarh.csv',
-        'static/chhattisgarh.csv', 'static/delhinct.csv', 'static/goa.csv', 'static/gujrat.csv',
-        'static/himanchalpradesh.csv', 'static/jharkhand.csv', 'static/jk.csv',
-        'static/karnataka.csv', 'static/kerala.csv', 'static/madhyapradesh.csv',
-        'static/maharastra.csv', 'static/nagaland.csv', 'static/odisha.csv',
-        'static/puducherry.csv', 'static/rajasthan.csv', 'static/tamilnadu.csv',
-        'static/telangana.csv', 'static/uttarpradesh.csv', 'static/westbengal.csv'
-    ]
+    files = [ 'static/all.csv']
     
     data = []
     for file in files:
